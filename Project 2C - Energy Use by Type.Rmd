@@ -1,0 +1,108 @@
+---
+title: "Project 2C - Energy Use by Sector"
+author: "Jill Anderson"
+date: "Due October 8, 2017"
+output: html_document
+---
+
+## INTRODUCTION
+#### Data: Table C1. Energy Consumption Overview: Estimates by Energy Source and End-Use Sector, 2015
+#### Units are in Trillion Btu
+#### US Energy Information Administration
+
+## PREPARE
+#### Load required lirbaries.
+```{r}
+library(knitr)
+library(stringr)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(DT)
+```
+
+## LOAD DATA
+#### Load raw data file into R
+```{r}
+energy_all <- read.csv("~/Desktop/EIA-source-use.csv", header = FALSE, stringsAsFactors = FALSE, check.names = FALSE)
+energy_all[1:10,]
+```
+
+#### This shows the header is across three rows 
+#### Read the file again without the top two header rows
+```{r}
+energy_raw <- read.csv("~/Desktop/EIA-source-use.csv", header = TRUE, skip = 2, stringsAsFactors = FALSE, check.names = FALSE)
+energy_raw[1:10,]
+```
+
+## SUBSET DATA
+#### Compare states by looking at the consumption of energy by the four types by removing the source columns
+```{r}
+energy_use <- energy_raw[,-2:-10]
+energy_use[1:10,]
+```
+
+## TIDY DATA
+#### Gather and tidy data around the different categories of usage
+```{r}
+energy_use_tidy <- gather(energy_use, "Use_Type", "Total_By_Type", Residential:Transportation) %>% 
+  arrange(State)
+datatable(energy_use_tidy)
+```
+
+## CALCULATE TOTAL
+#### Calculate the total energy consumed for each state by adding every four rows
+```{r}
+total_state <- colSums(matrix(energy_use_tidy$Total_By_Type, nrow=4))
+```
+
+#### Create a vector with the total value repeated four times to add to the working data set
+```{r}
+total_state_4 <- rep(total_state, each = 4)
+total_state_4 
+energy_use_tidy$Total_All <- total_state_4 
+datatable(energy_use_tidy)
+```
+
+## CALCULATE PERCENTAGE
+#### Calculate the percentage contribution for each use type against the total
+```{r}
+energy_use_perc <- energy_use_tidy %>%
+  mutate(Percent_Total = Total_By_Type / Total_All)
+```
+
+#### Round to shorten the Percentage of Total calculation to two digits
+```{r}
+energy_use_perc[,"Percent_Total"]=format(round(energy_use_perc[,"Percent_Total"]*100,2),nsmall=2)
+datatable(energy_use_perc)
+```
+
+## ANALYZE DATA
+#### Various analyses can be performed at this point, such as identifying the state that has the maximum percentage contribution from one of the four sectors 
+```{r}
+energy_use_perc$State[which.max(energy_use_perc[,"Percent_Total"])]
+energy_use_perc$Use_Type[which.max(energy_use_perc[,"Percent_Total"])]
+paste(max(energy_use_perc[,"Percent_Total"]),"%",sep="")
+```
+
+#### Similarily looking at which state has the minimum consumption percentage from any one sector
+```{r}
+energy_use_perc$State[which.min(energy_use_perc[,"Percent_Total"])]
+energy_use_perc$Use_Type[which.min(energy_use_perc[,"Percent_Total"])]
+paste(min(energy_use_perc[,"Percent_Total"]),"%",sep="")
+```
+
+#### Additionally, we can look at which state has the highest total consumption percentage from any one sector
+```{r}
+energy_use_perc$State[which.max(energy_use_perc[,"Total_By_Type"])]
+energy_use_perc$Use_Type[which.max(energy_use_perc[,"Total_By_Type"])]
+max(energy_use_perc[,"Total_By_Type"])
+paste(energy_use_perc$Percent_Total[which.max(energy_use_perc[,"Total_By_Type"])],"%",sep="")
+```
+
+#### Additionally, we can look at which state has the highest total consumption from any one sector
+```{r}
+energy_use_perc$State[which.max(energy_use_perc[,"Total_By_Type"])]
+energy_use_perc$Use_Type[which.max(energy_use_perc[,"Total_By_Type"])]
+max(energy_use_perc[,"Total_By_Type"])
+```
