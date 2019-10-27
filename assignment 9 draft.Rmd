@@ -1,0 +1,58 @@
+---
+title: "Untitled"
+output: html_document
+---
+#The New York Times web site provides a rich set of APIs, as described here: http://developer.nytimes.com/docs You'll need to start by signing up for an API key. Your task is to choose one of the New York Times APIs, construct an interface in R to read in the JSON data, and transform it to an R dataframe.
+```{r}
+library(tidyverse)
+library(jsonlite)
+library(knitr)
+library(dplyr)
+library(httr)
+library(rjson)
+library(stringi)
+```
+#Get my key from New York Times website
+```{r}
+my_key = "VyfZDT2zI2fvSp2OyKogKtzD6HrmTu5l"
+```
+#read json files of all movie reviews with my key
+```{r}
+df <- jsonlite::fromJSON(txt = paste0("https://api.nytimes.com/svc/movies/v2/reviews/all.json?api-key=", my_key)) %>% 
+  data.frame
+
+df %>%
+  head()
+```
+#Retrieve column names on data frame
+```{r}
+colnames(df)
+```
+#The link list contains the link information to the movie review article
+```{r}
+kable(names(df$results.link), format="markdown")
+```
+#Get information about the number of movie reviews returned by API data request
+```{r}
+nrow(df)
+```
+#Display all the results from the Link list
+```{r}
+all <- cbind(df[1:9], df$results.link$type, df$results.link$url,df$results.link$suggested_link_text)
+kable(head(all), format="markdown")
+```
+#Retrieve some information from the title, byline, headline, summary, date, and link
+```{r}
+friendly_display <- cbind(df[c(5,8,9,10,12)], df$results.link$url)
+kable(friendly_display, format="markdown")
+```
+
+
+
+
+
+
+
+
+
+
